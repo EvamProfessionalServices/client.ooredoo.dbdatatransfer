@@ -1,0 +1,38 @@
+#    driver-class-name: "com.teradata.jdbc.TeraDriver"
+#    driver-class-name: "org.postgresql.Driver"
+#    driver-class-name: "oracle.jdbc.driver.OracleDriver"
+
+
+data-transfer:
+  source-db:
+    url: "jdbc:postgresql://localhost:5432/evam711"
+    username: "evam711"
+    password: "evam711"
+    driver-class-name: "org.postgresql.Driver"
+
+  target-db:
+    url: "jdbc:oracle:thin:@//62.171.182.231:1521/FREE"
+    username: "C##EVAMADMIN"
+    password: "evamadmin1907"
+    driver-class-name: "oracle.jdbc.driver.OracleDriver"
+
+  transfer:
+    select-query: "select id, state, event from int_log_table"
+    target-table: "C##EVAMADMIN.NEWTABLE_2"
+    target-columns:
+      - "COLUMN1"
+      - "COLUMN2"
+      - "COLUMN3"
+    fetch-size: 50000
+    commit-size: 10000
+    truncate-target-table: true
+
+logging:
+  level:
+    root: INFO
+    com.evam.dbdatatransfer: DEBUG
+    org.springframework.jdbc: INFO
+  file:
+    name: ../log/data-transfer.log
+  pattern:
+    file: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
