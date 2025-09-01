@@ -44,6 +44,7 @@ public class AppProperties {
         private int fetchSize;
         private int commitSize;
         private boolean truncateTargetTable;
+        private boolean dropPartitionBeforeInsert;
 
         // Getters and Setters
         public String getSelectQuery() { return selectQuery; }
@@ -58,5 +59,8 @@ public class AppProperties {
         public void setCommitSize(int commitSize) { this.commitSize = commitSize; }
         public boolean isTruncateTargetTable() { return truncateTargetTable; }
         public void setTruncateTargetTable(boolean truncateTargetTable) { this.truncateTargetTable = truncateTargetTable; }
+        public boolean isDropPartitionBeforeInsert() { return dropPartitionBeforeInsert; }
+        public void setDropPartitionBeforeInsert(boolean dropPartitionBeforeInsert) { this.dropPartitionBeforeInsert = dropPartitionBeforeInsert; }
+
     }
 }

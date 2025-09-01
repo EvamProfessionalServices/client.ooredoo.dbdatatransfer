@@ -25,7 +25,8 @@ data-transfer:
       - "COLUMN3"
     fetch-size: 50000
     commit-size: 10000
-    truncate-target-table: true
+    truncate-target-table: false
+    drop-partition-before-insert: true
 
 logging:
   level:

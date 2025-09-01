@@ -7,6 +7,8 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
+
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
@@ -35,7 +37,13 @@ public class DataTransferRunner implements CommandLineRunner {
         long startTime = System.currentTimeMillis();
 
         try {
-            // Step 1: Truncate the target table if required
+
+            // Step 1: Drop partition before insert if required
+            if (appProperties.getTransfer().isDropPartitionBeforeInsert()) {
+                dropPartitionBeforeInsert();
+            }
+
+            // Step 2: Truncate the target table if required
             if (appProperties.getTransfer().isTruncateTargetTable()) {
                 truncateTargetTable();
             }
@@ -62,6 +70,59 @@ public class DataTransferRunner implements CommandLineRunner {
         log.info("Truncating target table '{}'...", tableName);
         targetJdbcTemplate.execute("TRUNCATE TABLE " + tableName);
         log.info("Table '{}' has been successfully truncated.", tableName);
+    }
+
+    /*
+    private void dropPartitionBeforeInsert() {
+        String tableName = appProperties.getTransfer().getTargetTable();
+        String partitionDate = getPartitionDate(); // Assuming partition by DATE column
+        String sql = "ALTER TABLE " + tableName + " DROP PARTITION FOR (TO_DATE('" + partitionDate + "', 'YYYY-MM-DD'))";
+        log.info("Dropping partition for date '{}'...", partitionDate);
+        targetJdbcTemplate.execute(sql);
+        log.info("Partition for date '{}' has been successfully dropped.", partitionDate);
+    }
+
+     */
+
+
+    private void dropPartitionBeforeInsert() {
+        String tableName = appProperties.getTransfer().getTargetTable();
+        String partitionDate = getPartitionDate(); // Assuming partition by DATE column
+        String sql = "ALTER TABLE " + tableName + " DROP PARTITION FOR (TO_DATE('" + partitionDate + "', 'YYYY-MM-DD'))";
+
+        try {
+            // Try to drop the partition
+            log.info("Dropping partition for date '{}'...", partitionDate);
+            targetJdbcTemplate.execute(sql);
+            log.info("Partition for date '{}' has been successfully dropped.", partitionDate);
+        } catch (Exception e) {
+            // Handle the "partition does not exist" error (ORA-02149)
+            if (isPartitionSqlError(e)) {
+                log.info("Partition for date '{}' does not exist on table '{}'; skipping drop operation.", partitionDate, tableName);
+            } else {
+                // For other errors, log them but **do not stop** the application
+                log.error("Error while dropping partition for date '{}' on table '{}'.", partitionDate, tableName, e);
+                // Ensure the exception is handled, but do not exit the process
+                // Continue with the rest of the operations
+            }
+        }
+    }
+
+    private boolean isPartitionSqlError(Exception e) {
+        // Check if the exception is an instance of SQLException
+        if (e instanceof SQLException) {
+            // Log the SQLException without checking the error code
+            log.warn("Non-critical SQL exception occurred: {}", e.getMessage());
+            return true; // This is a non-critical error that should be logged and can continue
+        }
+        return false; // Not an SQLException, so it is treated as a critical error
+    }
+
+
+    private String getPartitionDate() {
+        // Return the current date or logic to determine the specific date for partition
+        // Here we are assuming that the partition drop is for the current day
+        return java.time.LocalDate.now().toString(); // Formats the date as "YYYY-MM-DD"
     }
 
     private long transferData() {
