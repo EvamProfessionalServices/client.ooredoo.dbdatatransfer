@@ -11,7 +11,7 @@ echo "Starting the application..."
 
 # Start the application with a custom config location.
 # Output is redirected to /dev/null to prevent nohup.out.
-nohup java -Xms512m -Xmx2g -jar "$JAR_PATH" \
+nohup java -Xms512m -Xmx4g -Xss4m -XX:+UseG1GC -XX:MaxDirectMemorySize=1g -jar "$JAR_PATH" \
   --spring.config.location=file:"$CONFIG_PATH" > /dev/null 2>&1 &
 
 echo "Application started. Check logs at the configured location."
